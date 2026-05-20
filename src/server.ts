@@ -22,7 +22,7 @@ const initDB = async () => {
         CREATE TABLE IF NOT EXISTS users(
             id SERIAL PRIMARY KEY,
             name VARCHAR(20),
-            email VARCHAR(20) NOT NULL,
+            email VARCHAR(20) UNIQUE NOT NULL,
             password VARCHAR(20) NOT NULL,
             is_active BOOLEAN DEFAULT true,
             age INT,
@@ -46,7 +46,7 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-app.post("/", async (req: Request, res: Response) => {
+app.post("/api/users", async (req: Request, res: Response) => {
   try {
     const { name, email, password, age } = req.body;
 
@@ -57,14 +57,66 @@ app.post("/", async (req: Request, res: Response) => {
       [name, email, password, age],
     );
 
-    res.status(200).json({
+    res.status(201).json({
+      success: true,
       message: "User Create Success",
       data: result.rows[0],
     });
   } catch (error) {
-    res.status(200).json({
+    res.status(500).json({
+      success: false,
       message: "User Create Success",
       data: error,
+    });
+  }
+});
+
+app.get("/api/user", async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM users
+      `);
+    res.status(200).json({
+      success: true,
+      message: "Users retrived successfully!",
+      data: result.rows,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error: error,
+    });
+  }
+});
+
+app.get("/api/users/:id", async (req: Request, res: Response) => {
+  const id = req.params.id;
+  try {
+    const result = await pool.query(
+      `
+         SELECT * FROM users WHERE id=$1
+      `,
+      [id],
+    );
+    if(result.rows.length === 0){
+      res.status(404).json({
+      success: false,
+      message: "User Not Found",
+      data: {},
+    });
+    }
+    res.status(200).json({
+      success: true,
+      message: "User retrived successfully!",
+      data: result.rows[0],
+    });
+    console.log(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error: error,
     });
   }
 });

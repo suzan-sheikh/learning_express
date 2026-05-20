@@ -47,16 +47,26 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.post("/", async (req: Request, res: Response) => {
-  const { name, email, password, age } = req.body;
+  try {
+    const { name, email, password, age } = req.body;
 
-  const result = await pool.query(`
+    const result = await pool.query(
+      `
     INSERT INTO users(name, email, password, age) VALUES($1, $2, $3, $4) RETURNING *
-    `, [name, email, password, age]);
+    `,
+      [name, email, password, age],
+    );
 
-  res.status(200).json({
-    message: "User Create Success",
-    body: { name, email, password, age },
-  });
+    res.status(200).json({
+      message: "User Create Success",
+      data: result.rows[0],
+    });
+  } catch (error) {
+    res.status(200).json({
+      message: "User Create Success",
+      data: error,
+    });
+  }
 });
 
 app.listen(port, () => {
